@@ -1,0 +1,11 @@
+{
+    "sources": ["C:\\Users\\samue\\Documents"],
+    "lists": ["C:\\Program Files", "C:\\Program Files (x86)"],
+    "destination": "D:\\Back-up",
+    "destination_format": "%Y-%m-%d",
+    "repeat": true,
+    "time_format": "%H",
+    "time_value": "19",
+    "sleep": 3600, 
+    "keep_old": 2
+}
