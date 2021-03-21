@@ -5,7 +5,7 @@ A program that can be used as a one tap back-up, or can frequently copy files wi
 
 # INSTALLATION
 
-App requires some python, latest should work just fine, just the .pyw, config.txt and backup.ico files.
+App requires some python, some libraries (yeah, I didn't yet bother to work out auto installation), latest should work just fine, just the .pyw, config.txt and backup.ico files.
 
 Before you run the app, make sure to set up config.txt
 
