@@ -9,7 +9,7 @@ icon_path = "backup.ico"
 
 
 # You know, get back?
-def back_up(sources, destination_raw):
+def back_up(sources, listings, destination_raw):
 
     global icon_path
 
@@ -24,6 +24,18 @@ def back_up(sources, destination_raw):
                            
     os.makedirs(destination)
 
+    with open(destination + "\\ListingContents.txt", "w") as lists:
+        for listing in listings:
+            print(listing, "\n", file=lists)
+            print("\n".join(list(os.listdir(listing))), file=lists)
+            print("\n\n", file=lists)
+
+    # remove older stuff than one day
+    for i in range(2, 50):
+        old_date = (datetime.date.today() - datetime.timedelta(days=i)).strftime("%Y.%m.%d")
+        if os.path.exists(destination_raw + "\\" + old_date):
+            shutil.rmtree(destination_raw + "\\" + old_date, onerror=onerror)
+
     # copy paste all files to destination
     for file in sources:
 
@@ -34,12 +46,6 @@ def back_up(sources, destination_raw):
             
         except (FileNotFoundError, shutil.Error) as error:
             notification.notify(title="BACK-UP ERROR", message=str(error), app_icon=icon_path)
-
-    # remove older stuff than one day
-    for i in range(2, 50):
-        old_date = (datetime.date.today() - datetime.timedelta(days=i)).strftime("%Y.%m.%d")
-        if os.path.exists(destination_raw + "\\" + old_date):
-            shutil.rmtree(destination_raw + "\\" + old_date, onerror=onerror)
 
 
 # Fix weird windows stuff (missing permissions ...)
@@ -65,6 +71,7 @@ def main():
             continue
 
         sources = []
+        lists = []
         destination = ""
 
         # Load source files
@@ -75,6 +82,16 @@ def main():
                         sources.append(line.strip())
                     else:
                         notification.notify(title="BACK-UP ERROR, SOURCE PATH DOESN'T EXIST",
+                                            message=line.strip(), app_icon=icon_path)
+
+        # Load list files
+        with open("lists", "r") as file:
+            for line in file:
+                if line:
+                    if os.path.isdir(line.strip()):
+                        lists.append(line.strip())
+                    else:
+                        notification.notify(title="BACK-UP ERROR, LIST PATH DOESN'T EXIST",
                                             message=line.strip(), app_icon=icon_path)
 
         # Load destination folder
@@ -96,11 +113,11 @@ def main():
 
         # Do back-up
         if sources and destination:
-            back_up(sources, destination)
+            back_up(sources, lists, destination)
             notification.notify(title="BACK-UP", message="Successfully finished back-up",
                                 app_icon=icon_path)
 
-        sleep(60 * 60)
+        sleep(60 * 60 * 23)
 
 
 # Fancy way to catch any error, hehehe
