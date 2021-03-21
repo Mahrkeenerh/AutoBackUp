@@ -5,9 +5,11 @@ A program that can be used as a one tap back-up, or can frequently copy files wi
 
 # INSTALLATION
 
-App doesn't need anything, just the .exe, config.txt and backup.ico files.
+App requires some python, latest should work just fine, just the .pyw, config.txt and backup.ico files.
 
 Before you run the app, make sure to set up config.txt
+
+To have the app run with the start of the pc, make a shortcut into startup folder
 
 
 # FREQUENT BACK-UP
