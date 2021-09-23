@@ -19,7 +19,7 @@ def back_up(json_data):
     listings = json_data['lists']
     destination_raw = json_data['destination']
 
-    date = datetime.date.now().strftime(json_data['destination_format'])
+    date = datetime.datetime.now().strftime(json_data['destination_format'])
     destination = destination_raw + "\\" + date
 
     # Some duplicate shit is going on
