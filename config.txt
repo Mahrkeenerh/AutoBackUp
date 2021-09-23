@@ -7,5 +7,5 @@
     "time_format": "%H",
     "time_value": "19",
     "sleep": 3600, 
-    "keep_copies": 7
+    "keep_copies": 2
 }
