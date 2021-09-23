@@ -36,14 +36,22 @@ On left, there is a name, that has to stay the same, on right, there is your val
 ## Contents
 
 sources - where to copy all files from (everything inside the folder, all subfolders)
+
 lists - where to list contents of a folder from (everything inside the folder, no subfolders)
+
 destination - where to save everything that was copied
+
 destination_format - format for creating back-up folders (strftime() again)
+
 repeat - should the program run more than once
+
 time_format - what to compare time_value with
+
 time_value - at what specific value should the program make a back-up
+
 sleep - time in seconds to sleep after back-up (to prevent duplicates)
-keep_old - how many days old back-up folders should be kept at any time (1, 2 ...)
+
+keep_copies - how many copies should be kept at any time (1, 2 ...)
 
 paths can be either relative or absolute
 
@@ -54,7 +62,7 @@ paths can be either relative or absolute
 
 repeat -> either true or false
 
-Every value needs to be wrapped between "" but repeat and keep_old
+Every value needs to be wrapped between "" but repeat and keep_copies
 
 Numbers should be without extra zeroes at the beginning: 0, 1 ...
 

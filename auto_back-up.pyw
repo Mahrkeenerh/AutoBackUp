@@ -28,10 +28,9 @@ def back_up(json_data):
                 message=destination, app_icon=icon_path)
         return 1
 
-    # Remove older stuff than keep_old
-    for i in os.listdir(destination_raw):
-        if datetime.datetime.now() - parse(i) > datetime.timedelta(days=json_data['keep_old']):
-            shutil.rmtree(destination_raw + "\\" + i, onerror=onerror)
+    # Remove older stuff than keep_copies
+    while len(os.listdir(destination_raw)) >= json_data['keep_copies']:
+        shutil.rmtree(destination_raw + "\\" + os.listdir(destination_raw)[0], onerror=onerror)
 
     os.makedirs(destination)
 
@@ -202,14 +201,14 @@ def check_errors(json_data):
         all_right = False
 
 
-    # keep_old
+    # keep_copies
     try:
-        json_data['keep_old']
+        json_data['keep_copies']
 
         try:
-            int(json_data['keep_old'])
+            int(json_data['keep_copies'])
         except:
-            notification.notify(title="BACK-UP ERROR, KEEP OLD INVALID VALUE",
+            notification.notify(title="BACK-UP ERROR, KEEP COPIES INVALID VALUE",
                     message='config.txt', app_icon=icon_path)
         
             all_right = False
