@@ -29,7 +29,7 @@ def back_up(json_data):
         return 1
 
     # Remove older stuff than keep_copies
-    x = os.listdir(destination_raw).sort()
+    x = sorted(os.listdir(destination_raw))
     while len(os.listdir(destination_raw)) >= json_data['keep_copies']:
         shutil.rmtree(destination_raw + "\\" + x[0], onerror=onerror)
         del x[0]
