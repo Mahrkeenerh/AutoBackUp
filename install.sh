@@ -52,8 +52,7 @@ source "$VENV_DIR/bin/activate"
 
 # Install the package
 echo "[5/8] Installing AutoBackup..."
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Copy the source files to venv
 cp -r "$PROJECT_DIR/src/autobackup" "$VENV_DIR/lib/python"*/site-packages/
