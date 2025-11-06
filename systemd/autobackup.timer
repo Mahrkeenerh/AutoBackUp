@@ -1,0 +1,14 @@
+[Unit]
+Description=AutoBackup timer (daily at configured time)
+Requires=autobackup.service
+
+[Timer]
+# Run at boot after 5 minutes
+OnBootSec=5min
+# Run daily at 19:00 (adjust based on config)
+OnCalendar=daily
+# If missed, run as soon as possible
+Persistent=true
+
+[Install]
+WantedBy=timers.target

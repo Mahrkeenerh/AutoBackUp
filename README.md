@@ -1,74 +1,287 @@
-# AUTO BACK-UP APP
+# AutoBackup
 
-A program that can be used as a one tap back-up, or can frequently copy files without any input.
+Simple, automated backup utility for Pop!_OS and Ubuntu-based Linux distributions.
 
+## Features
 
-# INSTALLATION
+- 📁 **Automated Backups** - Schedule backups to run daily, weekly, or monthly
+- 🔔 **Desktop Notifications** - Get notified when backups complete
+- 📝 **Directory Listings** - Create manifests of directory contents
+- 🗂️ **Rotation Policy** - Automatically remove old backups
+- ⏰ **Systemd Integration** - Runs automatically on startup
+- 📊 **Logging** - All operations logged to file and systemd journal
 
-App requires some python, some libraries (yeah, I didn't yet bother to work out auto installation), latest should work just fine, just the .pyw, config.txt and backup.ico files.
+## Quick Start
 
-Before you run the app, make sure to set up config.txt
+### Installation
 
-To have the app run with the start of the pc, make a shortcut into startup folder
+```bash
+# Clone or download this repository
+cd AutoBackUp
 
+# Run the installation script
+./scripts/install.sh
+```
 
-# FREQUENT BACK-UP
+The installer will:
+- Create a virtual environment in `~/.local/share/autobackup/`
+- Install systemd services for auto-startup
+- Create a config template at `~/.config/autobackup/config.json`
+- Add the `autobackup` command to your PATH
 
-If you want to use the frequent back-ups, the config file must have 'repeat' set to true
+### Configuration
 
-'time_format' must be something that datetime.strftime() can chew through.
-If you don't know what that means, pick one from this list:
+Edit your configuration file:
 
-| time_format | meaning                                                 | examples      |
-| ----------- | :-----:                                                 | --------      |
-| '%H'        | 24 hours - used for daily back-up at specific hour      | '00' ... '24' |
-| '%d'        | day of month - used for monthly back-up at specific day | '01' ... '31' |
-| '%w'        | weekday - used for weekly back-up at specific day       | '1' ... '7'   |
+```bash
+nano ~/.config/autobackup/config.json
+```
 
+Example configuration:
 
-# config.txt
+```json
+{
+    "sources": [
+        "~/Documents",
+        "~/Pictures"
+    ],
+    "lists": [
+        "~/.config"
+    ],
+    "destination": "~/Backups",
+    "destination_format": "%Y-%m-%d",
+    "repeat": true,
+    "time_format": "%H",
+    "time_value": "19",
+    "sleep": 3600,
+    "keep_copies": 7
+}
+```
 
-This file is used for setting up the program.
-It's a json style, if you don't know what that means, just don't mess up with the formatting.
-On left, there is a name, that has to stay the same, on right, there is your value to edit.
+### Configuration Options
 
+| Option | Description | Example |
+|--------|-------------|---------|
+| `sources` | Directories to backup (full recursive copy) | `["~/Documents"]` |
+| `lists` | Directories to list contents of (no copy) | `["~/.config"]` |
+| `destination` | Where to save backups | `"~/Backups"` |
+| `destination_format` | Backup folder naming (strftime format) | `"%Y-%m-%d"` |
+| `repeat` | Run repeatedly (true) or once (false) | `true` |
+| `time_format` | Time unit to match: `%H` (hour), `%d` (day of month), `%w` (weekday) | `"%H"` |
+| `time_value` | When to run backup | `"19"` (7 PM) |
+| `sleep` | Seconds to wait after backup (prevents duplicates) | `3600` |
+| `keep_copies` | Number of backup versions to keep | `7` |
 
-## Contents
+**Note:** Use `~` for home directory - it will be expanded automatically.
 
-sources - where to copy all files from (everything inside the folder, all subfolders)
+### Schedule Examples
 
-lists - where to list contents of a folder from (everything inside the folder, no subfolders)
+**Daily backup at 7 PM:**
+```json
+{
+    "time_format": "%H",
+    "time_value": "19"
+}
+```
 
-destination - where to save everything that was copied
+**Weekly backup on Sunday (day 0):**
+```json
+{
+    "time_format": "%w",
+    "time_value": "0"
+}
+```
 
-destination_format - format for creating back-up folders (strftime() again)
+**Monthly backup on the 1st:**
+```json
+{
+    "time_format": "%d",
+    "time_value": "01"
+}
+```
 
-repeat - should the program run more than once
+## Usage
 
-time_format - what to compare time_value with
+### Manual Backup
 
-time_value - at what specific value should the program make a back-up
+Run a backup immediately:
 
-sleep - time in seconds to sleep after back-up (to prevent duplicates)
+```bash
+autobackup
+```
 
-keep_copies - how many copies should be kept at any time (1, 2 ...)
+Run with verbose output:
 
-paths can be either relative or absolute
+```bash
+autobackup --verbose
+```
 
+### Systemd Service Management
 
-## Values
+Check service status:
 
-[] -> multiple values available, split with ,
+```bash
+systemctl --user status autobackup.service
+```
 
-repeat -> either true or false
+View logs:
 
-Every value needs to be wrapped between "" but repeat and keep_copies
+```bash
+journalctl --user -u autobackup.service -f
+```
 
-Numbers should be without extra zeroes at the beginning: 0, 1 ...
+Restart service (after config changes):
 
+```bash
+systemctl --user restart autobackup.service
+```
 
-# DISCLAIMER
+Stop auto-startup:
 
-If you mess up anything, I take no responsibility for your actions.
+```bash
+systemctl --user stop autobackup.timer
+systemctl --user disable autobackup.timer
+```
 
-If you need some help or found a bug, feel free to message me over at: samuelbuban@gmail.com
+Re-enable auto-startup:
+
+```bash
+systemctl --user enable autobackup.timer
+systemctl --user start autobackup.timer
+```
+
+## Logs
+
+Logs are saved to two locations:
+
+1. **File:** `~/.local/share/autobackup/autobackup.log`
+2. **Journal:** `journalctl --user -u autobackup.service`
+
+View recent log file:
+
+```bash
+tail -f ~/.local/share/autobackup/autobackup.log
+```
+
+## Uninstallation
+
+```bash
+./scripts/uninstall.sh
+```
+
+This will:
+- Stop and disable the systemd service
+- Remove the virtual environment
+- Remove the `autobackup` command
+- Optionally remove config files and logs
+
+## Backup Structure
+
+Backups are organized by timestamp:
+
+```
+~/Backups/
+├── 2025-01-15/
+│   ├── Documents/
+│   ├── Pictures/
+│   └── ListingContents.txt
+├── 2025-01-16/
+│   ├── Documents/
+│   ├── Pictures/
+│   └── ListingContents.txt
+└── 2025-01-17/
+    ├── Documents/
+    ├── Pictures/
+    └── ListingContents.txt
+```
+
+The `ListingContents.txt` file contains directory listings of paths specified in `lists`.
+
+## Troubleshooting
+
+### Command not found: autobackup
+
+Add `~/.local/bin` to your PATH:
+
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+### Service not starting
+
+Check for config errors:
+
+```bash
+autobackup --verbose
+```
+
+View service logs:
+
+```bash
+journalctl --user -u autobackup.service -n 50
+```
+
+### Backup destination doesn't exist
+
+The destination directory must exist before running backups:
+
+```bash
+mkdir -p ~/Backups  # or your configured destination
+```
+
+### Notifications not showing
+
+Install libnotify-bin:
+
+```bash
+sudo apt install libnotify-bin
+```
+
+## Advanced Usage
+
+### Custom Config File
+
+Use a different config file:
+
+```bash
+autobackup --config /path/to/config.json
+```
+
+### Run in Daemon Mode Manually
+
+```bash
+autobackup --daemon
+```
+
+(This is normally handled by systemd)
+
+## Requirements
+
+- **OS:** Pop!_OS 22.04+ or Ubuntu 22.04+
+- **Python:** 3.8 or higher (pre-installed)
+- **notify-send:** For desktop notifications (usually pre-installed)
+
+## Files and Directories
+
+```
+~/.config/autobackup/config.json          # Your configuration
+~/.local/share/autobackup/venv/           # Virtual environment
+~/.local/share/autobackup/autobackup.log  # Log file
+~/.config/systemd/user/autobackup.*       # Systemd services
+~/.local/bin/autobackup                   # Command-line wrapper
+```
+
+## Support
+
+For bugs or questions:
+- Create an issue on GitHub
+- Email: samuelbuban@gmail.com
+
+## License
+
+Free to use and modify.
+
+## Disclaimer
+
+Always test your backup configuration before relying on it. The author takes no responsibility for data loss.
