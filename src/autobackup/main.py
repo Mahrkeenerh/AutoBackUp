@@ -14,6 +14,7 @@ import logging
 import datetime
 from time import sleep
 from pathlib import Path
+from typing import Optional
 
 from .backup import load_config, validate_config, perform_backup, notify, BackupError
 
@@ -37,10 +38,12 @@ def setup_logging(verbose: bool = False):
     )
 
 
-def run_daemon(config: dict):
+def run_daemon(config: dict, config_path: Optional[Path] = None):
     """Run in daemon mode with scheduling."""
     logger = logging.getLogger(__name__)
     logger.info("Starting AutoBackup daemon mode")
+    if config_path:
+        logger.info(f"Using custom config file: {config_path}")
 
     while True:
         # Check if it's time to run
@@ -51,7 +54,7 @@ def run_daemon(config: dict):
 
             # Reload config before each backup
             try:
-                config = load_config()
+                config = load_config(config_path)
                 errors = validate_config(config)
                 if errors:
                     logger.error("Config validation failed:")
@@ -125,7 +128,7 @@ def main():
                 notify("AutoBackup Error", "Daemon mode requires repeat=true in config")
                 return 1
 
-            return run_daemon(config)
+            return run_daemon(config, args.config)
         else:
             # Single run mode
             logger.info("Running backup once...")
