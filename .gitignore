@@ -23,6 +23,3 @@ venv/
 
 # User config (don't commit personal paths)
 config.json
-
-# Keep example
-!examples/config.example.json

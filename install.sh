@@ -58,13 +58,31 @@ PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cp -r "$PROJECT_DIR/src/autobackup" "$VENV_DIR/lib/python"*/site-packages/
 echo "  ✓ AutoBackup installed"
 
-# Copy example config if config doesn't exist
+# Create example config if it doesn't exist
 echo "[6/8] Setting up configuration..."
 CONFIG_FILE="$HOME/.config/autobackup/config.json"
 if [ -f "$CONFIG_FILE" ]; then
     echo "  ! Config already exists at $CONFIG_FILE"
 else
-    cp "$PROJECT_DIR/examples/config.example.json" "$CONFIG_FILE"
+    cat > "$CONFIG_FILE" << 'EOF'
+{
+    "sources": [
+        "~/Documents",
+        "~/Pictures"
+    ],
+    "lists": [
+        "~/.config",
+        "~/.local/bin"
+    ],
+    "destination": "~/Backups",
+    "destination_format": "%Y-%m-%d",
+    "repeat": true,
+    "time_format": "%H",
+    "time_value": "19",
+    "sleep": 3600,
+    "keep_copies": 7
+}
+EOF
     echo "  ✓ Created config at $CONFIG_FILE"
 fi
 
