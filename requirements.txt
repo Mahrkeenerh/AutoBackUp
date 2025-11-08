@@ -1,0 +1,3 @@
+# AutoBackup requirements
+# No external dependencies needed - uses only Python standard library
+# notify-send is provided by libnotify-bin (pre-installed on Pop!_OS)

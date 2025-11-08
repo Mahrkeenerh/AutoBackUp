@@ -1,74 +1,91 @@
-# AUTO BACK-UP APP
+# AutoBackup
 
-A program that can be used as a one tap back-up, or can frequently copy files without any input.
+Simple automated backup utility for Pop!_OS and Linux.
 
+## Installation
 
-# INSTALLATION
+```bash
+./install.sh
+```
 
-App requires some python, some libraries (yeah, I didn't yet bother to work out auto installation), latest should work just fine, just the .pyw, config.txt and backup.ico files.
+Creates a virtual environment, installs systemd services, and sets up config at `~/.config/autobackup/config.json`.
 
-Before you run the app, make sure to set up config.txt
+## Configuration
 
-To have the app run with the start of the pc, make a shortcut into startup folder
+Edit `~/.config/autobackup/config.json`:
 
+```json
+{
+    "sources": ["~/Documents", "~/Pictures"],
+    "lists": ["~/.config"],
+    "destination": "~/Backups",
+    "destination_format": "%Y-%m-%d",
+    "repeat": true,
+    "time_format": "%H",
+    "time_value": "19",
+    "sleep": 3600,
+    "keep_copies": 7
+}
+```
 
-# FREQUENT BACK-UP
+**Options:**
+- `sources` - Directories to backup (recursive copy)
+- `lists` - Directories to list contents only (no copy)
+- `destination` - Where to save backups
+- `destination_format` - Backup folder naming (strftime format)
+- `repeat` - Run repeatedly (true) or once (false)
+- `time_format` - When to run: `%H` (hour), `%d` (day of month), `%w` (weekday)
+- `time_value` - Time to trigger backup (e.g., "19" for 7 PM)
+- `sleep` - Seconds to wait after backup
+- `keep_copies` - Number of backup versions to keep
 
-If you want to use the frequent back-ups, the config file must have 'repeat' set to true
+**Note:** `~` expands to home directory.
 
-'time_format' must be something that datetime.strftime() can chew through.
-If you don't know what that means, pick one from this list:
+## Usage
 
-| time_format | meaning                                                 | examples      |
-| ----------- | :-----:                                                 | --------      |
-| '%H'        | 24 hours - used for daily back-up at specific hour      | '00' ... '24' |
-| '%d'        | day of month - used for monthly back-up at specific day | '01' ... '31' |
-| '%w'        | weekday - used for weekly back-up at specific day       | '1' ... '7'   |
+```bash
+# Run backup now
+autobackup
 
+# Run with verbose output
+autobackup --verbose
 
-# config.txt
+# Check service status
+systemctl --user status autobackup.service
 
-This file is used for setting up the program.
-It's a json style, if you don't know what that means, just don't mess up with the formatting.
-On left, there is a name, that has to stay the same, on right, there is your value to edit.
+# View logs
+journalctl --user -u autobackup.service -f
+# or
+tail -f ~/.local/share/autobackup/autobackup.log
+```
 
+## Uninstall
 
-## Contents
+```bash
+./uninstall.sh
+```
 
-sources - where to copy all files from (everything inside the folder, all subfolders)
+## Troubleshooting
 
-lists - where to list contents of a folder from (everything inside the folder, no subfolders)
+**Command not found:**
+```bash
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
 
-destination - where to save everything that was copied
+**No notifications:**
+```bash
+sudo apt install libnotify-bin
+```
 
-destination_format - format for creating back-up folders (strftime() again)
+**Service errors:**
+```bash
+autobackup --verbose
+journalctl --user -u autobackup.service -n 50
+```
 
-repeat - should the program run more than once
+## Requirements
 
-time_format - what to compare time_value with
-
-time_value - at what specific value should the program make a back-up
-
-sleep - time in seconds to sleep after back-up (to prevent duplicates)
-
-keep_copies - how many copies should be kept at any time (1, 2 ...)
-
-paths can be either relative or absolute
-
-
-## Values
-
-[] -> multiple values available, split with ,
-
-repeat -> either true or false
-
-Every value needs to be wrapped between "" but repeat and keep_copies
-
-Numbers should be without extra zeroes at the beginning: 0, 1 ...
-
-
-# DISCLAIMER
-
-If you mess up anything, I take no responsibility for your actions.
-
-If you need some help or found a bug, feel free to message me over at: samuelbuban@gmail.com
+- Pop!_OS 22.04+ or Ubuntu 22.04+
+- Python 3.8+
+- notify-send (optional, for notifications)

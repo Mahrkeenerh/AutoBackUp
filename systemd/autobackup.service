@@ -1,0 +1,17 @@
+[Unit]
+Description=AutoBackup - Automatic backup service
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/share/autobackup/venv/bin/python -m autobackup --daemon
+Restart=on-failure
+RestartSec=60
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=autobackup
+
+[Install]
+WantedBy=default.target
