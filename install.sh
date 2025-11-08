@@ -66,16 +66,6 @@ if [ -f "$CONFIG_FILE" ]; then
 else
     cp "$PROJECT_DIR/examples/config.example.json" "$CONFIG_FILE"
     echo "  ✓ Created config at $CONFIG_FILE"
-    echo "  ⚠  IMPORTANT: Edit $CONFIG_FILE with your backup paths!"
-fi
-
-# Create destination directory from config
-if command -v python3 &> /dev/null; then
-    DEST_DIR=$(python3 -c "import json, os; config=json.load(open('$CONFIG_FILE')); print(os.path.expanduser(config['destination']))" 2>/dev/null)
-    if [ -n "$DEST_DIR" ] && [ ! -d "$DEST_DIR" ]; then
-        mkdir -p "$DEST_DIR"
-        echo "  ✓ Created destination directory at $DEST_DIR"
-    fi
 fi
 
 # Install systemd service
@@ -86,12 +76,7 @@ cp "$PROJECT_DIR/systemd/autobackup.timer" "$HOME/.config/systemd/user/"
 # Reload systemd
 systemctl --user daemon-reload
 
-# Enable and start the service
-systemctl --user enable autobackup.service
-systemctl --user enable autobackup.timer
-systemctl --user start autobackup.timer
-
-echo "  ✓ Systemd service installed and enabled"
+echo "  ✓ Systemd service files installed"
 
 # Create symlink for CLI
 echo "[8/8] Creating command-line shortcut..."
@@ -111,14 +96,27 @@ echo "========================================"
 echo "  Installation Complete! ✓"
 echo "========================================"
 echo
+echo "⚠  IMPORTANT: Before starting the service, configure your backup:"
+echo
 echo "Next steps:"
 echo "  1. Edit your config: $CONFIG_FILE"
-echo "  2. Test the backup: autobackup"
-echo "  3. Check service status: systemctl --user status autobackup.service"
-echo "  4. View logs: journalctl --user -u autobackup.service -f"
+echo "     - Set your source directories to backup"
+echo "     - Set your destination directory"
+echo "     - Configure backup schedule"
 echo
-echo "The backup will run automatically based on your config schedule."
-echo "Logs are also saved to: ~/.local/share/autobackup/autobackup.log"
+echo "  2. Create the destination directory (or it will be auto-created on first backup)"
+echo "     Example: mkdir -p ~/Backups"
+echo
+echo "  3. Enable and start the service:"
+echo "     systemctl --user enable autobackup.service autobackup.timer"
+echo "     systemctl --user start autobackup.timer"
+echo
+echo "  4. Test manually (optional):"
+echo "     autobackup --verbose"
+echo
+echo "  5. Monitor logs:"
+echo "     journalctl --user -u autobackup.service -f"
+echo "     tail -f ~/.local/share/autobackup/autobackup.log"
 echo
 
 # Check if ~/.local/bin is in PATH
