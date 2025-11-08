@@ -69,6 +69,15 @@ else
     echo "  ⚠  IMPORTANT: Edit $CONFIG_FILE with your backup paths!"
 fi
 
+# Create destination directory from config
+if command -v python3 &> /dev/null; then
+    DEST_DIR=$(python3 -c "import json, os; config=json.load(open('$CONFIG_FILE')); print(os.path.expanduser(config['destination']))" 2>/dev/null)
+    if [ -n "$DEST_DIR" ] && [ ! -d "$DEST_DIR" ]; then
+        mkdir -p "$DEST_DIR"
+        echo "  ✓ Created destination directory at $DEST_DIR"
+    fi
+fi
+
 # Install systemd service
 echo "[7/8] Installing systemd service..."
 cp "$PROJECT_DIR/systemd/autobackup.service" "$HOME/.config/systemd/user/"
