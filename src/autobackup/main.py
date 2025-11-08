@@ -49,21 +49,6 @@ def run_daemon(config: dict):
         if current_time == config['time_value']:
             logger.info(f"Time match ({config['time_format']}={current_time}), running backup...")
 
-            # Reload config before each backup
-            try:
-                config = load_config()
-                errors = validate_config(config)
-                if errors:
-                    logger.error("Config validation failed:")
-                    for error in errors:
-                        logger.error(f"  - {error}")
-                    notify("AutoBackup Error", f"Config validation failed: {errors[0]}")
-                    return 1
-            except BackupError as e:
-                logger.error(f"Failed to reload config: {e}")
-                notify("AutoBackup Error", str(e))
-                return 1
-
             # Perform backup
             try:
                 perform_backup(config)
