@@ -236,7 +236,24 @@ def perform_backup(config: Dict) -> bool:
             shutil.copytree(
                 source_path,
                 dest_path,
-                ignore=shutil.ignore_patterns("*.ini", "My *"),
+                ignore=shutil.ignore_patterns(
+                    "*.ini", "My *",
+                    # Cache directories
+                    ".cache", "Cache", "cache", "cache2", "CachedData",
+                    # Package managers
+                    "node_modules", ".npm", ".yarn", ".pnpm-store",
+                    ".gradle", ".m2", ".cargo",
+                    # Python
+                    "__pycache__", "*.pyc", "*.pyo",
+                    # Thumbnails and trash
+                    ".thumbnails", ".Trash", ".Trash-*",
+                    # IDE caches
+                    ".vscode", ".idea",
+                    # Browser specific
+                    ".mozilla/firefox/*/cache2",
+                    # Logs
+                    "*.log"
+                ),
                 dirs_exist_ok=True
             )
         except Exception as e:
