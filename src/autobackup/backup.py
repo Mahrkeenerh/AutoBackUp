@@ -163,22 +163,34 @@ def cleanup_old_backups(destination_dir: Path, keep_copies: int):
 
 
 def create_listing_file(destination: Path, list_paths: List[str]):
-    """Create a file listing contents of specified directories."""
-    listing_file = destination / "ListingContents.txt"
+    """Create separate listing files for each directory in a listings directory."""
+    listings_dir = destination / "listings"
 
     try:
-        with open(listing_file, 'w') as f:
-            for list_path in list_paths:
-                list_path_obj = Path(list_path).expanduser()
-                f.write(f"\n{list_path}\n")
+        # Create the listings directory
+        listings_dir.mkdir(parents=True, exist_ok=True)
+
+        for list_path in list_paths:
+            list_path_obj = Path(list_path).expanduser()
+
+            # Create a sanitized filename from the path
+            # Replace path separators and problematic characters with underscores
+            sanitized_name = str(list_path_obj).replace(os.sep, '_').replace(':', '_').replace('~', 'home')
+            if sanitized_name.startswith('_'):
+                sanitized_name = sanitized_name[1:]
+            listing_file = listings_dir / f"{sanitized_name}.txt"
+
+            with open(listing_file, 'w') as f:
+                f.write(f"{list_path}\n\n")
                 if list_path_obj.exists() and list_path_obj.is_dir():
                     contents = sorted(os.listdir(list_path_obj))
                     f.write("\n".join(contents))
-                    f.write("\n\n")
-        logger.info(f"Created listing file: {listing_file}")
+                    f.write("\n")
+
+            logger.info(f"Created listing file: {listing_file}")
     except Exception as e:
-        logger.error(f"Failed to create listing file: {e}")
-        raise BackupError(f"Failed to create listing file: {e}")
+        logger.error(f"Failed to create listing files: {e}")
+        raise BackupError(f"Failed to create listing files: {e}")
 
 
 def perform_backup(config: Dict) -> bool:
@@ -225,6 +237,50 @@ def perform_backup(config: Dict) -> bool:
             notify("Backup Error", str(e))
             return False
 
+    # Custom ignore function that can check full paths
+    def ignore_function(directory, names):
+        """Custom ignore function that handles both patterns and path-based exclusions."""
+        ignored = set()
+
+        # Pattern-based ignores
+        pattern_ignore = shutil.ignore_patterns(
+            "*.ini", "My *",
+            # Cache directories
+            ".cache", "Cache", "cache", "cache2", "CachedData",
+            # Package managers
+            "node_modules", ".npm", ".yarn", ".pnpm-store",
+            ".gradle", ".m2", ".cargo",
+            # Python
+            "__pycache__", "*.pyc", "*.pyo",
+            # Thumbnails and trash
+            ".thumbnails", ".Trash", ".Trash-*",
+            # IDE caches
+            ".vscode", ".idea",
+            # Browser specific
+            "cache2",  # Firefox cache
+            # Logs
+            "*.log",
+            # Special files that can't be copied
+            "*Socket", "*Lock", "*Cookie", "*.pipe"
+        )
+        ignored.update(pattern_ignore(directory, names))
+
+        # Path-based ignores - check if we're in specific subdirectories
+        dir_path = Path(directory)
+        for name in names:
+            full_path = dir_path / name
+            # Ignore .local/share directory
+            if full_path.match("*/.local/share"):
+                ignored.add(name)
+            # Ignore .steam directories (huge runtime environments)
+            elif full_path.match("*/.steam"):
+                ignored.add(name)
+            # Ignore .var (flatpak app data)
+            elif full_path.match("*/.var"):
+                ignored.add(name)
+
+        return ignored
+
     # Copy source directories
     errors = []
     for source in sources:
@@ -236,30 +292,19 @@ def perform_backup(config: Dict) -> bool:
             shutil.copytree(
                 source_path,
                 dest_path,
-                ignore=shutil.ignore_patterns(
-                    "*.ini", "My *",
-                    # Cache directories
-                    ".cache", "Cache", "cache", "cache2", "CachedData",
-                    # Package managers
-                    "node_modules", ".npm", ".yarn", ".pnpm-store",
-                    ".gradle", ".m2", ".cargo",
-                    # Python
-                    "__pycache__", "*.pyc", "*.pyo",
-                    # Thumbnails and trash
-                    ".thumbnails", ".Trash", ".Trash-*",
-                    # IDE caches
-                    ".vscode", ".idea",
-                    # Browser specific
-                    ".mozilla/firefox/*/cache2",
-                    # Logs
-                    "*.log"
-                ),
+                ignore=ignore_function,
+                symlinks=True,  # Copy symlinks as symlinks, don't follow them
+                ignore_dangling_symlinks=True,  # Ignore broken symlinks
                 dirs_exist_ok=True
             )
         except Exception as e:
-            error_msg = f"Failed to copy {source}: {e}"
+            # Convert exception to string and limit size to avoid overwhelming logs
+            error_str = str(e)
+            if len(error_str) > 1000:
+                error_str = error_str[:1000] + f"... ({len(error_str)} chars total)"
+            error_msg = f"Failed to copy {source}: {error_str}"
             logger.error(error_msg)
-            errors.append(error_msg)
+            errors.append(f"Failed to copy {source}")
 
     # Report results
     if errors:
