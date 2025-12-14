@@ -5,6 +5,7 @@ import shutil
 import datetime
 import json
 import logging
+import stat
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -278,8 +279,38 @@ def perform_backup(config: Dict) -> bool:
             # Ignore .var (flatpak app data)
             elif full_path.match("*/.var"):
                 ignored.add(name)
+            # Skip special files (sockets, pipes, devices) by checking file type
+            elif full_path.exists():
+                try:
+                    file_stat = full_path.stat()
+                    # Check if it's a socket, pipe, character device, or block device
+                    if (stat.S_ISSOCK(file_stat.st_mode) or
+                        stat.S_ISFIFO(file_stat.st_mode) or
+                        stat.S_ISCHR(file_stat.st_mode) or
+                        stat.S_ISBLK(file_stat.st_mode)):
+                        ignored.add(name)
+                        logger.debug(f"Ignoring special file: {full_path}")
+                except (OSError, PermissionError):
+                    # If we can't stat the file, let copytree handle it
+                    pass
 
         return ignored
+
+    # Custom error handler for copytree to skip problematic files
+    def handle_copy_error(src, dst, exc_info):
+        """Handle copy errors by logging and continuing."""
+        exc_type, exc_value, exc_traceback = exc_info
+        error_msg = str(exc_value)
+
+        # Check if it's a special file error (socket, device, etc.) - just log as info
+        if "No such device or address" in error_msg or "Socket" in error_msg:
+            logger.info(f"Skipping special file: {src} ({error_msg})")
+        # Permission denied errors
+        elif "Permission denied" in error_msg:
+            logger.warning(f"Permission denied, skipping: {src}")
+        else:
+            # Other errors - log as warning
+            logger.warning(f"Failed to copy {src}: {error_msg}")
 
     # Copy source directories
     errors = []
@@ -297,13 +328,45 @@ def perform_backup(config: Dict) -> bool:
                 ignore_dangling_symlinks=True,  # Ignore broken symlinks
                 dirs_exist_ok=True
             )
+        except shutil.Error as e:
+            # shutil.Error contains list of (src, dst, error) tuples
+            # Use our custom error handler to process each error
+            permission_errors = 0
+            special_file_errors = 0
+            other_errors = 0
+
+            for src, dst, error in e.args[0]:
+                if "Permission denied" in str(error):
+                    permission_errors += 1
+                    if permission_errors <= 3:  # Only log first 3
+                        logger.warning(f"Permission denied: {src}")
+                elif "No such device or address" in str(error):
+                    special_file_errors += 1
+                    if special_file_errors <= 3:  # Only log first 3
+                        logger.info(f"Skipped special file: {src}")
+                else:
+                    other_errors += 1
+                    if other_errors <= 3:  # Only log first 3
+                        logger.warning(f"Copy error: {src} - {error}")
+
+            # Summarize errors
+            summary = []
+            if permission_errors > 0:
+                summary.append(f"{permission_errors} permission denied")
+            if special_file_errors > 0:
+                summary.append(f"{special_file_errors} special files skipped")
+            if other_errors > 0:
+                summary.append(f"{other_errors} other errors")
+                errors.append(f"Failed to copy some files in {source}")
+
+            if summary:
+                logger.info(f"Copy of {source} completed with: {', '.join(summary)}")
         except Exception as e:
-            # Convert exception to string and limit size to avoid overwhelming logs
+            # Unexpected errors
             error_str = str(e)
-            if len(error_str) > 1000:
-                error_str = error_str[:1000] + f"... ({len(error_str)} chars total)"
-            error_msg = f"Failed to copy {source}: {error_str}"
-            logger.error(error_msg)
+            if len(error_str) > 500:
+                error_str = error_str[:500] + "..."
+            logger.error(f"Unexpected error copying {source}: {error_str}")
             errors.append(f"Failed to copy {source}")
 
     # Report results

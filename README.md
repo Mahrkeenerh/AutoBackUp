@@ -33,13 +33,14 @@ Edit `~/.config/autobackup/config.json`:
 ```
 
 **Options:**
-- `sources` - Directories to backup (recursive copy). Automatically excludes:
+- `sources` - Directories to backup (recursive copy). **Note:** Avoid system directories like `/boot`, `/sys`, `/proc` that require elevated permissions. Automatically excludes:
   - Legacy patterns: `*.ini`, `My *`
   - Cache directories: `.cache`, `Cache`, `cache2`, `CachedData`
   - Package managers: `node_modules`, `.npm`, `.yarn`, `.gradle`, `.m2`, `.cargo`
   - Python: `__pycache__`, `*.pyc`, `*.pyo`
   - System: `.thumbnails`, `.Trash*`, `*.log`
   - IDE: `.vscode`, `.idea`
+  - Special files: Sockets, pipes, character/block devices (automatically detected and skipped)
 - `lists` - Directories to list contents only (creates `ListingContents.txt`, no copy)
 - `destination` - Where to save backups
 - `destination_format` - Backup folder naming (strftime format, e.g., `%Y-%m-%d` → `2025-11-08`)
