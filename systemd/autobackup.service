@@ -4,7 +4,8 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=%h/.local/share/autobackup/venv/bin/python -m autobackup --daemon
+ExecStart=/home/samo/Data/Programs/Back-up/AutoBackUp/venv/bin/python -m autobackup --daemon
+WorkingDirectory=/home/samo/Data/Programs/Back-up/AutoBackUp
 Restart=on-failure
 RestartSec=60
 

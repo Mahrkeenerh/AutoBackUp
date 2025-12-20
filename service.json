@@ -1,0 +1,29 @@
+{
+  "name": "AutoBackUp",
+  "version": "2.0.0",
+  "description": "Automatic backup utility with scheduling",
+  "type": "user-service",
+
+  "systemd": {
+    "unit": "systemd/autobackup.service",
+    "timer": "systemd/autobackup.timer",
+    "service_name": "autobackup.service"
+  },
+
+  "network": {
+    "port": null,
+    "health": null
+  },
+
+  "paths": {
+    "config": "~/.config/autobackup/config.json",
+    "logs": "journalctl",
+    "install": "install.sh",
+    "uninstall": "uninstall.sh"
+  },
+
+  "ui": {
+    "icon": "💾",
+    "category": "Backup"
+  }
+}
