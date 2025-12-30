@@ -279,6 +279,9 @@ def perform_backup(config: Dict) -> bool:
             # Ignore .var (flatpak app data)
             elif full_path.match("*/.var"):
                 ignored.add(name)
+            # Ignore Apps directory (AppImages and installed apps)
+            elif full_path.match("*/Apps"):
+                ignored.add(name)
             # Skip special files (sockets, pipes, devices) by checking file type
             elif full_path.exists():
                 try:
